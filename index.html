@@ -92,7 +92,17 @@ select { -webkit-appearance:none; }
   background:var(--card); border:1px solid var(--border);
   border-radius:var(--radius); overflow:hidden; margin-bottom:12px;
   cursor:pointer; transition:all .2s;
+  position:relative;
 }
+.work-item.selected { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+.work-select {
+  position:absolute; top:8px; left:8px; z-index:10;
+  width:28px; height:28px; border-radius:50%;
+  border:2px solid var(--border); background:rgba(15,15,26,0.8);
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  font-size:14px; color:transparent; transition:all .2s; user-select:none;
+}
+.work-item.selected .work-select { border-color:var(--accent); background:var(--accent); color:#1a1a2e; }
 .work-item:hover { border-color:var(--accent); }
 .work-thumb { width:100%; height:160px; object-fit:cover; background:var(--bg); }
 .work-info { padding:12px 16px; }
@@ -214,8 +224,10 @@ select { -webkit-appearance:none; }
           <span id="detailName" style="font-size:18px;font-weight:600;color:var(--accent);"></span>
         </div>
         <div class="btn-row" style="margin-bottom:16px;">
+          <button class="btn btn-outline btn-sm" id="btnExportWord">📄 导出 Word</button>
           <button class="btn btn-outline btn-sm" id="btnExportJSON">📦 导出 JSON</button>
           <button class="btn btn-outline btn-sm" id="btnImportJSON">📥 导入 JSON</button>
+          <button class="btn btn-danger btn-sm" id="btnDeleteSelected" style="display:none;">🗑️ 删除选中(<span id="selectedCount">0</span>)</button>
           <input type="file" id="jsonFileInput" accept=".json" style="display:none;">
         </div>
         <div id="workList"></div>

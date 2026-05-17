@@ -286,6 +286,7 @@ var App = {
   currentImageHeight: null,
   currentCollectionId: null,
   currentPreviewWorkId: null,
+  selectedWorkIds: [],
 
   switchPage: function(page) {
     document.querySelectorAll('nav a').forEach(function(a){
@@ -429,6 +430,9 @@ var App = {
 
   openCollection: function(id, name) {
     App.currentCollectionId = id;
+    App.selectedWorkIds = [];
+    var btn = document.getElementById('btnDeleteSelected');
+    if(btn) btn.style.display = 'none';
     document.getElementById('collectionList').style.display = 'none';
     document.getElementById('emptyCollections').style.display = 'none';
     document.getElementById('collectionDetail').style.display = '';
@@ -457,7 +461,9 @@ var App = {
           var tagClass = w.brushType === '硬笔' ? 'hard' : 'brush';
           brushTag = '<span class="preview-tag ' + tagClass + '">' + App.escHtml(w.brushType) + '</span>';
         }
-        html += '<div class="work-item" data-id="'+w.id+'" onclick="App.previewWork('+w.id+')">' +
+        var selectedClass = App.selectedWorkIds.includes(w.id) ? ' selected' : '';
+        html += '<div class="work-item' + selectedClass + '" data-id="'+w.id+'" onclick="App.previewWork('+w.id+')">' +
+          '<div class="work-select" onclick="event.stopPropagation(); App.toggleWorkSelection('+w.id+');">✓</div>' +
           preview +
           '<div class="work-info">' +
             '<div class="work-title">' + brushTag + ' ' + App.escHtml((w.originalText||'').substring(0,50)) + '</div>' +
@@ -513,6 +519,52 @@ var App = {
     var overlay = document.getElementById('previewOverlay');
     overlay.classList.remove('show');
     App.currentPreviewWorkId = null;
+  },
+
+  toggleWorkSelection: function(id) {
+    var idx = App.selectedWorkIds.indexOf(id);
+    if(idx === -1) {
+      App.selectedWorkIds.push(id);
+    } else {
+      App.selectedWorkIds.splice(idx, 1);
+    }
+    // 更新卡片样式
+    var item = document.querySelector('.work-item[data-id="' + id + '"]');
+    if(item) item.classList.toggle('selected', idx === -1);
+    // 更新删除按钮
+    var btn = document.getElementById('btnDeleteSelected');
+    var cnt = document.getElementById('selectedCount');
+    if(btn && cnt) {
+      cnt.textContent = App.selectedWorkIds.length;
+      btn.style.display = App.selectedWorkIds.length > 0 ? '' : 'none';
+    }
+  },
+
+  deleteSelectedWorks: function() {
+    if(App.selectedWorkIds.length === 0) return;
+    if(!confirm('确定要删除选中的 ' + App.selectedWorkIds.length + ' 幅作品吗？')) return;
+    App.toast('🗑️ 删除中...');
+    var db = null;
+    DB.open().then(function(d){ db = d; return Promise.resolve(); }).then(function(){
+      var tx = db.transaction('works', 'readwrite');
+      var store = tx.objectStore('works');
+      var completed = 0;
+      App.selectedWorkIds.forEach(function(id){
+        store.delete(id);
+      });
+      return new Promise(function(resolve, reject){
+        tx.oncomplete = function(){ resolve(); };
+        tx.onerror = function(e){ reject(e.target.error); };
+      });
+    }).then(function(){
+      App.toast('✅ 已删除 ' + App.selectedWorkIds.length + ' 幅作品');
+      App.selectedWorkIds = [];
+      var btn = document.getElementById('btnDeleteSelected');
+      if(btn) btn.style.display = 'none';
+      App.loadWorks(App.currentCollectionId);
+    }).catch(function(e){
+      App.toast('❌ 删除失败: '+(e.message||''));
+    });
   },
 
   deleteCollectionConfirm: function(id, name) {
@@ -713,6 +765,12 @@ function initApp() {
       previewOverlay.addEventListener('click', function(e){
         if(e.target === previewOverlay) App.closePreview();
       });
+    }
+
+    // 删除选中作品按钮
+    var btnDeleteSelected = document.getElementById('btnDeleteSelected');
+    if(btnDeleteSelected) {
+      btnDeleteSelected.addEventListener('click', function(){ App.deleteSelectedWorks(); });
     }
 
     // 导出 Word 按钮（如果有）
