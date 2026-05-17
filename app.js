@@ -1,13 +1,13 @@
-// 墨韵书斋 - app.js (完整版：含 Word 导出)
+// 墨韵书斋 - app.js (完整版：含预览、书体类型、综合赏析、Word 导出)
 // JS 执行标记
 (function(){
   var el = document.getElementById('jsStatus');
   if(el) el.textContent = 'JS OK';
 })();
 
-// ═══════════════
+// ════════════════
 //  IndexedDB 封装
-// ═══════════════
+// ════════════════
 var DB = {
   name: 'CalligraphyApp',
   ver: 1,
@@ -100,6 +100,17 @@ var DB = {
     });
   },
 
+  getWorkById: function(workId) {
+    var self = this;
+    return self.open().then(function(db){
+      return new Promise(function(resolve, reject){
+        var req = db.transaction('works','readonly').objectStore('works').get(workId);
+        req.onsuccess = function(){ resolve(req.result || null); };
+        req.onerror = function(e){ reject(e.target.error); };
+      });
+    });
+  },
+
   getSetting: function(key) {
     var self = this;
     return self.open().then(function(db){
@@ -123,9 +134,9 @@ var DB = {
   }
 };
 
-// ═══════════════
+// ════════════════
 //  AI 调用
-// ═══════════════
+// ════════════════
 var AI = {
   call: function(systemPrompt, userContent, temperature) {
     return Promise.all([
@@ -162,9 +173,9 @@ var AI = {
   }
 };
 
-// ═══════════════
+// ════════════════
 //  Word 导出（Docx 对象）
-// ═══════════════
+// ════════════════
 var Docx = {
   escXml: function(s) {
     return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -198,6 +209,10 @@ var Docx = {
       }
       body+='<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
       // 文字页（靠左）
+      // 添加书体类型
+      if(w.brushType){
+        body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>【书体类型】'+Docx.escXml(w.brushType)+'</w:t></w:r></w:p>';
+      }
       body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t>【原文】</w:t></w:r></w:p>';
       body+='<w:p><w:pPr><w:jc w:val="both"/><w:ind w:firstLine="480"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">'+Docx.escXml(w.originalText||'')+'</w:t></w:r></w:p>';
       body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t>【书法赏析】</w:t></w:r></w:p>';
@@ -261,15 +276,16 @@ var Docx = {
   }
 };
 
-// ═══════════════
+// ════════════════
 //  主应用
-// ═══════════════
+// ════════════════
 var App = {
   currentImageData: null,
   currentImageType: null,
   currentImageWidth: null,
   currentImageHeight: null,
   currentCollectionId: null,
+  currentPreviewWorkId: null,
 
   switchPage: function(page) {
     document.querySelectorAll('nav a').forEach(function(a){
@@ -308,12 +324,14 @@ var App = {
   aiAnalyze: function() {
     var content = (document.getElementById('originalText').value||'').trim();
     if(!content){ App.toast('⚠️ 请先输入书写内容原文'); return; }
+    var penType = document.getElementById('penType').value || '毛笔';
     var btn = document.getElementById('btnAnalyze');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> 赏析中...';
     AI.call(
-      '你是一位书法鉴赏专家。请根据提供的书法作品原文，从笔法、结体、章法、墨法、取法与风格等维度进行深入赏析，300-500字，语言优美有深度，最后一段以"整体来看"开头。不要加标题。',
-      content, 0.7
+      '你是一位书法鉴赏专家。请根据提供的书法作品原文和书体类型（硬笔或毛笔），从笔法、结体、章法、墨法、取法与风格等维度进行深入赏析，300-500字，语言优美有深度，最后一段以"整体来看"开头。注意结合硬笔或毛笔的书写工具特点进行分析。不要加标题。',
+      '书体类型：' + penType + '\n\n书写内容：\n' + content,
+      0.7
     ).then(function(analysis){
       document.getElementById('analysisText').textContent = analysis;
       document.getElementById('analysisBox').classList.add('show');
@@ -333,11 +351,13 @@ var App = {
     if(!originalText){ App.toast('⚠️ 请输入书写内容原文'); return; }
     if(!App.currentImageData){ App.toast('⚠️ 请上传书法作品图片'); return; }
     var analysis = (document.getElementById('analysisText').textContent||'').trim();
+    var brushType = document.getElementById('penType').value || '毛笔';
     App.toast('💾 保存中...');
     DB.addWork({
       collectionId:collectionId,
       originalText:originalText,
       analysis:analysis,
+      brushType:brushType,
       imageData:App.currentImageData,
       imageType:App.currentImageType,
       imageWidth:App.currentImageWidth,
@@ -432,15 +452,67 @@ var App = {
         if(w.imageData){
           preview = '<img class="work-thumb" src="data:'+(w.imageType||'image/jpeg')+';base64,'+w.imageData+'">';
         }
-        html += '<div class="work-item" data-id="'+w.id+'">' +
+        var brushTag = '';
+        if(w.brushType){
+          var tagClass = w.brushType === '硬笔' ? 'hard' : 'brush';
+          brushTag = '<span class="preview-tag ' + tagClass + '">' + App.escHtml(w.brushType) + '</span>';
+        }
+        html += '<div class="work-item" data-id="'+w.id+'" onclick="App.previewWork('+w.id+')">' +
           preview +
           '<div class="work-info">' +
-            '<div class="work-title">'+App.escHtml((w.originalText||'').substring(0,50))+'</div>' +
+            '<div class="work-title">' + brushTag + ' ' + App.escHtml((w.originalText||'').substring(0,50)) + '</div>' +
             '<div class="work-date">'+new Date(w.createdAt).toLocaleString('zh-CN')+'</div>' +
           '</div></div>';
       });
       container.innerHTML = html;
     });
+  },
+
+  previewWork: function(workId) {
+    App.currentPreviewWorkId = workId;
+    DB.getWorkById(workId).then(function(w){
+      if(!w) { App.toast('⚠️ 作品不存在'); return; }
+      var overlay = document.getElementById('previewOverlay');
+      var img = document.getElementById('previewImg');
+      var body = document.getElementById('previewBody');
+
+      // 设置图片
+      if(w.imageData){
+        img.src = 'data:' + (w.imageType||'image/jpeg') + ';base64,' + w.imageData;
+        img.style.display = '';
+      } else {
+        img.style.display = 'none';
+      }
+
+      // 构建详情
+      var tagHtml = '';
+      if(w.brushType){
+        var tagClass = w.brushType === '硬笔' ? 'hard' : 'brush';
+        tagHtml = '<span class="preview-tag ' + tagClass + '">' + App.escHtml(w.brushType) + '</span>';
+      }
+      var html = '';
+      html += '<div class="preview-work-title">' + tagHtml + ' 作品赏析</div>';
+      html += '<div class="preview-work-date">收录于 ' + new Date(w.createdAt).toLocaleString('zh-CN') + '</div>';
+
+      if(w.originalText){
+        html += '<div class="preview-section"><h3>【原文】</h3><p>' + App.escHtml(w.originalText) + '</p></div>';
+      }
+      if(w.analysis){
+        html += '<div class="preview-section"><h3>【书法赏析】</h3><p>' + App.escHtml(w.analysis) + '</p></div>';
+      }
+
+      body.innerHTML = html;
+      overlay.classList.add('show');
+    }).catch(function(e){
+      console.error('previewWork error:', e);
+      App.toast('❌ 加载预览失败');
+    });
+  },
+
+  closePreview: function() {
+    var overlay = document.getElementById('previewOverlay');
+    overlay.classList.remove('show');
+    App.currentPreviewWorkId = null;
   },
 
   deleteCollectionConfirm: function(id, name) {
@@ -477,7 +549,7 @@ var App = {
     if(!collectionId){ App.toast('⚠️ 请先打开一个作品集'); return; }
     App.toast('📦 导出 JSON 中...');
     DB.getWorksByCollection(collectionId).then(function(works){
-      var data = works.map(function(w){ return { originalText:w.originalText||'', analysis:w.analysis||'', imageData:w.imageData||null, imageType:w.imageType||null, imageWidth:w.imageWidth||null, imageHeight:w.imageHeight||null, createdAt:w.createdAt }; });
+      var data = works.map(function(w){ return { originalText:w.originalText||'', analysis:w.analysis||'', brushType:w.brushType||'', imageData:w.imageData||null, imageType:w.imageType||null, imageWidth:w.imageWidth||null, imageHeight:w.imageHeight||null, createdAt:w.createdAt }; });
       var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -509,8 +581,8 @@ var App = {
         var added = 0;
         var promise = Promise.resolve();
         data.forEach(function(item){
-          promise = promise.then(function(){ 
-            return DB.addWork({ collectionId:collectionId, originalText:item.originalText||'', analysis:item.analysis||'', imageData:item.imageData||null, imageType:item.imageType||null, imageWidth:item.imageWidth||null, imageHeight:item.imageHeight||null, createdAt:item.createdAt||Date.now() }).then(function(){ added++; });
+          promise = promise.then(function(){
+            return DB.addWork({ collectionId:collectionId, originalText:item.originalText||'', analysis:item.analysis||'', brushType:item.brushType||'', imageData:item.imageData||null, imageType:item.imageType||null, imageWidth:item.imageWidth||null, imageHeight:item.imageHeight||null, createdAt:item.createdAt||Date.now() }).then(function(){ added++; });
           });
         });
         promise.then(function(){
@@ -575,9 +647,9 @@ var App = {
   }
 };
 
-// ═══════════════
+// ════════════════
 //  初始化
-// ═══════════════
+// ════════════════
 function initApp() {
   try {
     // 导航
@@ -629,7 +701,21 @@ function initApp() {
       });
     }
 
-    // 导出 Word 按钮
+    // 预览关闭按钮
+    var previewClose = document.getElementById('previewClose');
+    if(previewClose) {
+      previewClose.addEventListener('click', function(){ App.closePreview(); });
+    }
+
+    // 点击预览遮罩层关闭
+    var previewOverlay = document.getElementById('previewOverlay');
+    if(previewOverlay) {
+      previewOverlay.addEventListener('click', function(e){
+        if(e.target === previewOverlay) App.closePreview();
+      });
+    }
+
+    // 导出 Word 按钮（如果有）
     var btnExport = document.getElementById('btnExportWord');
     if(btnExport) {
       btnExport.disabled = false;

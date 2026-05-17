@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>墨韵书斋</title>
+<style>
+:root { --bg:#0f0f1a; --card:#1a1a2e; --text:#e8e6e3; --text-light:#9a97a0; --accent:#c9a96e; --border:#2a2a40; --radius:10px; }
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:-apple-system,"PingFang SC","Microsoft YaHei",serif; background:var(--bg); color:var(--text); min-height:100vh; }
+#app { max-width:600px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+nav { position:sticky; top:0; z-index:100; background:rgba(15,15,26,0.95); backdrop-filter:blur(10px); border-bottom:1px solid var(--border); display:flex; height:54px; }
+nav a { flex:1; display:flex; align-items:center; justify-content:center; text-decoration:none; color:var(--text-light); font-size:14px; cursor:pointer; border-bottom:2px solid transparent; }
+nav a.active { color:var(--accent); border-bottom-color:var(--accent); }
+main { flex:1; padding:16px; padding-bottom:80px; }
+.page { display:none; }
+.page.active { display:block; }
+.card { background:var(--card); border-radius:var(--radius); padding:20px; margin-bottom:16px; border:1px solid var(--border); }
+label { display:block; font-size:13px; color:var(--text-light); margin-bottom:6px; }
+input,textarea,select { width:100%; padding:10px 14px; border:1px solid var(--border); border-radius:8px; background:var(--bg); color:var(--text); font-size:15px; font-family:inherit; outline:none; }
+textarea { resize:vertical; min-height:120px; }
+.btn { padding:10px 20px; border:none; border-radius:8px; font-size:14px; font-family:inherit; cursor:pointer; }
+.btn-primary { background:var(--accent); color:#1a1a2e; }
+.empty-state { text-align:center; padding:60px 20px; color:var(--text-light); }
+#toast { position:fixed; bottom:80px; left:50%; transform:translateX(-50%); background:var(--card); color:var(--text); border:1px solid var(--border); padding:10px 24px; border-radius:20px; font-size:14px; opacity:0; transition:all .3s; z-index:999; pointer-events:none; }
+#toast.show { opacity:1; }
+</style>
+</head>
+<body>
+<div id="app">
+  <nav>
+    <a href="#" data-page="input" class="active">录入</a>
+    <a href="#" data-page="collections">作品集</a>
+    <a href="#" data-page="settings">设置</a>
+  </nav>
+  <main>
+    <div id="pageInput" class="page active">
+      <div class="card"><p>录入页 - 基础版测试中...</p></div>
+    </div>
+    <div id="pageCollections" class="page">
+      <div class="empty-state"><p>作品集页</p></div>
+    </div>
+    <div id="pageSettings" class="page">
+      <div class="card"><p>设置页</p></div>
+    </div>
+  </main>
+  <div id="toast"></div>
+</div>
+
+<script>
+(function(){
+  // 导航切换
+  document.querySelectorAll('nav a').forEach(function(a){
+    a.addEventListener('click', function(e){
+      e.preventDefault();
+      var page = this.getAttribute('data-page');
+      document.querySelectorAll('nav a').forEach(function(x){ x.classList.remove('active'); });
+      this.classList.add('active');
+      document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+      var target = document.getElementById('page' + page.charAt(0).toUpperCase() + page.slice(1));
+      if(target) target.classList.add('active');
+    });
+  });
+
+  // Toast
+  window.showToast = function(msg){
+    var el = document.getElementById('toast');
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(function(){ el.classList.remove('show'); }, 2500);
+  };
+
+  // 测试：页面加载完成后显示
+  window.showToast('✅ JS 已加载，导航正常');
+  console.log('App init OK');
+})();
+</script>
+</body>
+</html>
