@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="墨韵书斋">
+<meta name="theme-color" content="#1a1a2e">
+<link rel="manifest" href="manifest.json">
+<title>墨韵书斋 — 书法赏析</title>
+<style>
+:root {
+  --bg:#0f0f1a;--card:#1a1a2e;--card-hover:#22223a;
+  --text:#e8e6e3;--text-light:#9a97a0;
+  --accent:#c9a96e;--accent-light:#dfc08a;
+  --border:#2a2a40;--danger:#c0392b;
+  --radius:10px;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Serif SC",serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+#app { max-width:600px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column; }
+nav {
+  position:sticky; top:0; z-index:100; background:rgba(15,15,26,0.95);
+  backdrop-filter:blur(10px); border-bottom:1px solid var(--border);
+  display:flex; height:54px;
+}
+nav a {
+  flex:1; display:flex; align-items:center; justify-content:center;
+  text-decoration:none; color:var(--text-light); font-size:14px; font-weight:500;
+  border-bottom:2px solid transparent; transition:all .2s; letter-spacing:1px;
+  cursor:pointer;
+}
+nav a.active { color:var(--accent); border-bottom-color:var(--accent); }
+main { flex:1; padding:16px; overflow-y:auto; padding-bottom:80px; }
+.page { display:none; }
+.page.active { display:block; }
+.card {
+  background:var(--card); border-radius:var(--radius);
+  box-shadow:0 4px 20px rgba(0,0,0,0.3); padding:20px; margin-bottom:16px;
+  border:1px solid var(--border);
+}
+label { display:block; font-size:13px; color:var(--text-light); margin-bottom:6px; letter-spacing:0.5px; }
+input,textarea,select {
+  width:100%; padding:10px 14px; border:1px solid var(--border);
+  border-radius:8px; background:var(--bg); color:var(--text);
+  font-size:15px; font-family:inherit; outline:none; transition:border .2s;
+}
+input:focus,textarea:focus,select:focus { border-color:var(--accent); }
+textarea { resize:vertical; min-height:120px; line-height:1.8; }
+select { -webkit-appearance:none; }
+.upload-area {
+  border:2px dashed var(--border); border-radius:var(--radius);
+  padding:30px 20px; text-align:center; cursor:pointer;
+  transition:all .2s; position:relative; overflow:hidden;
+  min-height:180px; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+}
+.upload-area:hover { border-color:var(--accent); background:rgba(201,169,110,0.05); }
+.upload-area.has-image { padding:10px; border-style:solid; }
+.upload-icon { font-size:40px; margin-bottom:10px; opacity:0.5; }
+.upload-text { font-size:14px; color:var(--text-light); }
+.preview-img { max-width:100%; max-height:300px; border-radius:6px; object-fit:contain; }
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:10px 20px; border:none; border-radius:8px; font-size:14px;
+  font-family:inherit; cursor:pointer; transition:all .2s; font-weight:500;
+}
+.btn-primary { background:var(--accent); color:#1a1a2e; }
+.btn-primary:hover { background:var(--accent-light); }
+.btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-outline { background:transparent; border:1px solid var(--border); color:var(--text-light); }
+.btn-outline:hover { border-color:var(--accent); color:var(--accent); }
+.btn-danger { background:var(--danger); color:#fff; }
+.btn-sm { padding:7px 14px; font-size:13px; }
+.btn-block { width:100%; }
+.btn-row { display:flex; gap:10px; margin-top:12px; }
+.collection-item {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:12px;
+  cursor:pointer; transition:all .2s;
+}
+.collection-item:hover { background:var(--card-hover); border-color:var(--accent); }
+.collection-name { font-size:16px; font-weight:600; color:var(--accent); margin-bottom:4px; }
+.collection-info { font-size:13px; color:var(--text-light); }
+.collection-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+.work-item {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius); overflow:hidden; margin-bottom:12px;
+  cursor:pointer; transition:all .2s;
+}
+.work-item:hover { border-color:var(--accent); }
+.work-thumb { width:100%; height:160px; object-fit:cover; background:var(--bg); }
+.work-info { padding:12px 16px; }
+.work-title { font-size:14px; color:var(--text); margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.work-date { font-size:12px; color:var(--text-light); }
+.analysis-box { display:none; margin-top:16px; }
+.analysis-box.show { display:block; }
+.analysis-label { font-weight:700; color:var(--accent); margin-bottom:8px; font-size:15px; }
+.analysis-text { line-height:1.8; font-size:15px; white-space:pre-wrap; background:var(--bg); padding:16px; border-radius:8px; border:1px solid var(--border); }
+.setting-group { margin-bottom:20px; }
+.setting-group label { font-weight:600; color:var(--accent); margin-bottom:8px; }
+.empty-state { text-align:center; padding:60px 20px; color:var(--text-light); }
+.empty-state .icon { font-size:50px; margin-bottom:12px; opacity:0.4; }
+.empty-state p { font-size:14px; line-height:1.6; }
+#toast {
+  position:fixed; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--card); color:var(--text); border:1px solid var(--border);
+  padding:10px 24px; border-radius:20px; font-size:14px;
+  opacity:0; transition:all .3s; z-index:999; pointer-events:none; white-space:nowrap;
+}
+#toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.loading {
+  display:inline-block; width:16px; height:16px; border:2px solid var(--border);
+  border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+::-webkit-scrollbar { width:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+@supports (padding-bottom:env(safe-area-inset-bottom)) {
+  main { padding-bottom:calc(80px + env(safe-area-inset-bottom)); }
+}
+</style>
+</head>
+<body>
+<div id="jsStatus" style="position:fixed;top:4px;right:4px;font-size:10px;opacity:0.5;z-index:9999;color:var(--accent);">JS loading...</div>
+
+<div id="app">
+  <nav>
+    <a href="javascript:void(0)" data-page="input" class="active">录入</a>
+    <a href="javascript:void(0)" data-page="collections">作品集</a>
+    <a href="javascript:void(0)" data-page="settings">设置</a>
+  </nav>
+
+  <main>
+    <!-- 录入页 -->
+    <div id="pageInput" class="page active">
+      <div class="card">
+        <label>选择作品集</label>
+        <select id="collectionSelect"><option value="">-- 请先创建作品集 --</option></select>
+      </div>
+      <div class="card">
+        <label>书法作品图片</label>
+        <div class="upload-area" id="uploadArea">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-text">点击或拖拽上传书法作品图片</div>
+        </div>
+      </div>
+      <div class="card">
+        <label>书写内容（原文）</label>
+        <textarea id="originalText" placeholder="请输入书法作品的书写内容原文..."></textarea>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnAnalyze">🔍 AI 书法赏析</button>
+      </div>
+      <div class="analysis-box" id="analysisBox">
+        <div class="analysis-label">【书法赏析】</div>
+        <div class="analysis-text" id="analysisText"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" id="btnSave">💾 保存到作品集</button>
+      </div>
+      <div id="inputMsg" style="margin-top:8px;font-size:13px;color:var(--text-light);text-align:center;"></div>
+    </div>
+
+    <!-- 作品集页 -->
+    <div id="pageCollections" class="page">
+      <div class="btn-row" style="margin-bottom:16px;">
+        <button class="btn btn-primary btn-block" id="btnNewCollection">＋ 新建作品集</button>
+      </div>
+      <div id="collectionList"></div>
+      <div id="emptyCollections" class="empty-state" style="display:none;">
+        <div class="icon">📚</div>
+        <p>还没有作品集<br>点击上方按钮创建一个</p>
+      </div>
+      <div id="collectionDetail" style="display:none;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <button class="btn btn-outline btn-sm" id="btnBackToList">← 返回</button>
+          <span id="detailName" style="font-size:18px;font-weight:600;color:var(--accent);"></span>
+        </div>
+        <div class="btn-row" style="margin-bottom:16px;">
+          <button class="btn btn-outline btn-sm" id="btnExportWord" disabled>📄 导出 Word（待实现）</button>
+        </div>
+        <div id="workList"></div>
+        <div id="emptyWorks" class="empty-state" style="display:none;">
+          <div class="icon">🖌️</div>
+          <p>作品集还是空的<br>去录入页添加第一幅作品吧</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 设置页 -->
+    <div id="pageSettings" class="page">
+      <div class="card">
+        <div class="setting-group">
+          <label>API 地址</label>
+          <input id="apiUrl" placeholder="https://api.deepseek.com/v1/chat/completions">
+        </div>
+        <div class="setting-group">
+          <label>模型名称</label>
+          <input id="apiModel" placeholder="deepseek-chat">
+        </div>
+        <div class="setting-group">
+          <label>API Key</label>
+          <input id="apiKey" type="password" placeholder="sk-...">
+        </div>
+        <button class="btn btn-outline btn-block" id="btnTestAPI">🔗 测试连接</button>
+        <div id="apiResult" style="margin-top:10px;font-size:13px;text-align:center;"></div>
+      </div>
+      <div class="card">
+        <p style="font-size:13px;color:var(--text-light);line-height:1.6;">
+          📱 将本页面添加到主屏幕即可作为 App 使用<br>
+          🔑 API Key 仅存储在本地，不会上传至任何服务器<br>
+          💾 所有数据保存在浏览器本地（IndexedDB）
+        </p>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
