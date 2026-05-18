@@ -1,4 +1,4 @@
-// 路笛书斋 - app.js (完整版：含预览、书体类型、综合赏析、Word 导出)
+// 路笛书斋 - app.js (完整版:含预览、书体类型、综合赏析、Word 导出)
 // JS 执行标记
 (function(){
   var el = document.getElementById('jsStatus');
@@ -174,7 +174,7 @@ var AI = {
 };
 
 // ════════════════
-//  Word 导出（Docx 对象）
+//  Word 导出(Docx 对象)
 // ════════════════
 var Docx = {
   escXml: function(s) {
@@ -204,14 +204,17 @@ var Docx = {
         var iw=(w.imageWidth||800)*PX2EMU, ih=(w.imageHeight||600)*PX2EMU;
         var mw=5400000,mh=9000000,sc=Math.min(mw/iw,mh/ih,1);
         var cx=Math.round(iw*sc),cy=Math.round(ih*sc);
-        // 浮于文字上方，水平居中
+        // 浮于文字上方,水平居中
         body+='<w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:drawing><wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="251658240" behindDoc="0" locked="0" layoutInCell="1" allowOverlap="1"><wp:simplePos x="0" y="0"/><wp:positionH relativeFrom="column"><wp:align>center</wp:align></wp:positionH><wp:positionV relativeFrom="paragraph"><wp:posOffset>0</wp:posOffset></wp:positionV><wp:extent cx="'+cx+'" cy="'+cy+'"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/><wp:docPr id="'+(i+1)+'" name="img'+(i+1)+'"/><wp:cNvGraphicFramePr><a:graphicFrameLocks xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" noChangeAspect="1"/></wp:cNvGraphicFramePr><a:graphic xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture"><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture"><pic:pic><pic:nvPicPr><pic:cNvPr id="0" name="'+mname+'"/><pic:cNvPicPr><a:picLocks noChangeAspect="1"/></pic:cNvPicPr></pic:nvPicPr><pic:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="'+rid+'"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill><pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="'+cx+'" cy="'+cy+'"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr></pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r></w:p>';
       }
       body+='<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
-      // 文字页（靠左）
+      // 文字页(靠左)
       // 添加书体类型
       if(w.brushType){
         body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>【书体类型】'+Docx.escXml(w.brushType)+'</w:t></w:r></w:p>';
+      }
+      if(w.calligraphyType){
+        body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t>【书法类型】'+Docx.escXml(w.calligraphyType)+'</w:t></w:r></w:p>';
       }
       body+='<w:p><w:pPr><w:jc w:val="left"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:b/><w:sz w:val="28"/><w:szCs w:val="28"/></w:rPr><w:t>【原文】</w:t></w:r></w:p>';
       body+='<w:p><w:pPr><w:jc w:val="both"/><w:ind w:firstLine="480"/></w:pPr><w:r><w:rPr><w:rFonts w:ascii="微软雅黑" w:hAnsi="微软雅黑" w:eastAsia="微软雅黑"/><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr><w:t xml:space="preserve">'+Docx.escXml(w.originalText||'')+'</w:t></w:r></w:p>';
@@ -326,12 +329,13 @@ var App = {
     var content = (document.getElementById('originalText').value||'').trim();
     if(!content){ App.toast('⚠️ 请先输入书写内容原文'); return; }
     var penType = document.getElementById('penType').value || '毛笔';
+    var calligraphyType = document.getElementById('calligraphyType').value || '';
     var btn = document.getElementById('btnAnalyze');
     btn.disabled = true;
     btn.innerHTML = '<span class="loading"></span> 赏析中...';
     AI.call(
-      '你是一位书法鉴赏专家。请根据提供的书法作品原文和书体类型（硬笔或毛笔），从笔法、结体、章法、墨法、取法与风格等维度进行深入赏析，300-500字，语言优美有深度，最后一段以"整体来看"开头。注意结合硬笔或毛笔的书写工具特点进行分析。不要加标题。',
-      '书体类型：' + penType + '\n\n书写内容：\n' + content,
+      '你是一位严谨的书法批评家，不是捧场的人。你的职责是客观、专业地评价书法作品，既指出优点也指出不足。禁止使用套话和恭维（如“令人赏心悦目”“堪称佳作”“气韵生动”等空泛赞美）。评价必须结合书体类型（硬笔/毛笔）和书法类型（大篆/小篆/隶书/章草/今草/狂草/魏碑/唐楷/行楷/行草）的特点进行针对性分析。结构要求：1.笔法分析：用笔的提按、顿挫、转折是否到位，是否有败笔；2.结体分析：字形结构是否符合该书体的规范，重心是否稳妥，疏密是否得当；3.章法分析：整幅作品的布局、行气、节奏是否和谐；4.不足之处：明确指出具体的问题和改进建议。整体评价用200-400字，语言直接，不说废话。',
+      '书体类型：' + penType + '\n书法类型：' + calligraphyType + '\n书写内容：\n' + content,
       0.7
     ).then(function(analysis){
       document.getElementById('analysisText').textContent = analysis;
@@ -353,18 +357,20 @@ var App = {
     if(!App.currentImageData){ App.toast('⚠️ 请上传书法作品图片'); return; }
     var analysis = (document.getElementById('analysisText').textContent||'').trim();
     var brushType = document.getElementById('penType').value || '毛笔';
+    var calligraphyType = document.getElementById('calligraphyType').value || '';
     App.toast('💾 保存中...');
     DB.addWork({
       collectionId:collectionId,
       originalText:originalText,
       analysis:analysis,
       brushType:brushType,
+      calligraphyType:calligraphyType,
       imageData:App.currentImageData,
       imageType:App.currentImageType,
       imageWidth:App.currentImageWidth,
       imageHeight:App.currentImageHeight
     }).then(function(){
-      App.toast('✅ 保存成功！');
+      App.toast('✅ 保存成功!');
       document.getElementById('originalText').value = '';
       document.getElementById('analysisText').textContent = '';
       document.getElementById('analysisBox').classList.remove('show');
@@ -379,7 +385,7 @@ var App = {
   },
 
   showNewCollection: function() {
-    var name = prompt('请输入作品集名称：');
+    var name = prompt('请输入作品集名称:');
     if(!name) return;
     App.toast('💾 创建中...');
     DB.addCollection({name:name.trim()}).then(function(){
@@ -461,6 +467,9 @@ var App = {
           var tagClass = w.brushType === '硬笔' ? 'hard' : 'brush';
           brushTag = '<span class="preview-tag ' + tagClass + '">' + App.escHtml(w.brushType) + '</span>';
         }
+        if(w.calligraphyType){
+          brushTag += '<span class="preview-tag brush">' + App.escHtml(w.calligraphyType) + '</span>';
+        }
         var selectedClass = App.selectedWorkIds.includes(w.id) ? ' selected' : '';
         html += '<div class="work-item' + selectedClass + '" data-id="'+w.id+'" onclick="App.previewWork('+w.id+')">' +
           '<div class="work-select" onclick="event.stopPropagation(); App.toggleWorkSelection('+w.id+');">✓</div>' +
@@ -495,6 +504,9 @@ var App = {
       if(w.brushType){
         var tagClass = w.brushType === '硬笔' ? 'hard' : 'brush';
         tagHtml = '<span class="preview-tag ' + tagClass + '">' + App.escHtml(w.brushType) + '</span>';
+      }
+      if(w.calligraphyType){
+        tagHtml += '<span class="preview-tag brush">' + App.escHtml(w.calligraphyType) + '</span>';
       }
       var html = '';
       html += '<div class="preview-work-title">' + tagHtml + ' 作品赏析</div>';
@@ -542,7 +554,7 @@ var App = {
 
   deleteSelectedWorks: function() {
     if(App.selectedWorkIds.length === 0) return;
-    if(!confirm('确定要删除选中的 ' + App.selectedWorkIds.length + ' 幅作品吗？')) return;
+    if(!confirm('确定要删除选中的 ' + App.selectedWorkIds.length + ' 幅作品吗?')) return;
     App.toast('🗑️ 删除中...');
     var db = null;
     DB.open().then(function(d){ db = d; return Promise.resolve(); }).then(function(){
@@ -568,7 +580,7 @@ var App = {
   },
 
   deleteCollectionConfirm: function(id, name) {
-    if(!confirm('确定要删除作品集「'+name+'」吗？\n该作品集下的所有作品也会被删除！')) return;
+    if(!confirm('确定要删除作品集「'+name+'」吗?\n该作品集下的所有作品也会被删除!')) return;
     DB.deleteCollection(id).then(function(){
       App.toast('✅ 已删除');
       App.loadCollections();
@@ -601,7 +613,7 @@ var App = {
     if(!collectionId){ App.toast('⚠️ 请先打开一个作品集'); return; }
     App.toast('📦 导出 JSON 中...');
     DB.getWorksByCollection(collectionId).then(function(works){
-      var data = works.map(function(w){ return { originalText:w.originalText||'', analysis:w.analysis||'', brushType:w.brushType||'', imageData:w.imageData||null, imageType:w.imageType||null, imageWidth:w.imageWidth||null, imageHeight:w.imageHeight||null, createdAt:w.createdAt }; });
+      var data = works.map(function(w){ return { originalText:w.originalText||'', analysis:w.analysis||'', brushType:w.brushType||'', calligraphyType:w.calligraphyType||'', imageData:w.imageData||null, imageType:w.imageType||null, imageWidth:w.imageWidth||null, imageHeight:w.imageHeight||null, createdAt:w.createdAt }; });
       var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -634,11 +646,11 @@ var App = {
         var promise = Promise.resolve();
         data.forEach(function(item){
           promise = promise.then(function(){
-            return DB.addWork({ collectionId:collectionId, originalText:item.originalText||'', analysis:item.analysis||'', brushType:item.brushType||'', imageData:item.imageData||null, imageType:item.imageType||null, imageWidth:item.imageWidth||null, imageHeight:item.imageHeight||null, createdAt:item.createdAt||Date.now() }).then(function(){ added++; });
+            return DB.addWork({ collectionId:collectionId, originalText:item.originalText||'', analysis:item.analysis||'', brushType:item.brushType||'', calligraphyType:item.calligraphyType||'', imageData:item.imageData||null, imageType:item.imageType||null, imageWidth:item.imageWidth||null, imageHeight:item.imageHeight||null, createdAt:item.createdAt||Date.now() }).then(function(){ added++; });
           });
         });
         promise.then(function(){
-          App.toast('✅ 导入完成，共 '+added+' 条');
+          App.toast('✅ 导入完成,共 '+added+' 条');
           App.loadWorks(collectionId);
         }).catch(function(err){
           App.toast('❌ 导入失败: '+(err.message||''));
@@ -669,13 +681,17 @@ var App = {
   testAPI: function() {
     App.saveSettings();
     var resultEl = document.getElementById('apiResult');
-    resultEl.textContent = '测试中...';
-    AI.call('你是书法专家','请回复"连接成功"',0).then(function(){
-      resultEl.textContent = '✅ 连接正常！';
-      App.toast('✅ API 连接正常');
+    resultEl.innerHTML = '<span style="color:var(--text-light);">🔄 测试连接中...</span>';
+    var startTime = Date.now();
+    AI.call('你是书法专家','请回复"连接成功"',0).then(function(res){
+      var elapsed = Date.now() - startTime;
+      resultEl.innerHTML = '<span style="color:#27ae60;">✅ 连接成功!</span> <span style="color:var(--text-light);font-size:12px;">(耗时 ' + elapsed + 'ms)</span>';
+      App.toast('✅ API 连接成功');
     }).catch(function(e){
-      resultEl.textContent = '❌ 失败: '+(e.message||'连接失败').substring(0,60);
-      App.toast('❌ '+(e.message||'连接失败'));
+      var elapsed = Date.now() - startTime;
+      var errMsg = e.message || '连接失败';
+      resultEl.innerHTML = '<span style="color:#e74c3c;">❌ 连接失败</span><br><span style="color:var(--text-light);font-size:12px;">' + App.escHtml(errMsg.substring(0,80)) + '</span>';
+      App.toast('❌ ' + errMsg.substring(0,40));
     });
   },
 
@@ -773,7 +789,7 @@ function initApp() {
       btnDeleteSelected.addEventListener('click', function(){ App.deleteSelectedWorks(); });
     }
 
-    // 导出 Word 按钮（如果有）
+    // 导出 Word 按钮(如果有)
     var btnExport = document.getElementById('btnExportWord');
     if(btnExport) {
       btnExport.disabled = false;
@@ -797,6 +813,12 @@ function initApp() {
     var jsonFileInput = document.getElementById('jsonFileInput');
     if(jsonFileInput) {
       jsonFileInput.addEventListener('change', function(e){ App.handleJSONImport(e); });
+    }
+
+    // 测试连接按钮
+    var btnTestAPI = document.getElementById('btnTestAPI');
+    if(btnTestAPI) {
+      btnTestAPI.addEventListener('click', function(){ App.testAPI(); });
     }
 
     // 设置自动保存

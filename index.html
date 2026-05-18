@@ -189,6 +189,21 @@ select { -webkit-appearance:none; }
         </select>
       </div>
       <div class="card">
+        <label>书法类型</label>
+        <select id="calligraphyType">
+          <option value="大篆">大篆</option>
+          <option value="小篆">小篆</option>
+          <option value="隶书">隶书</option>
+          <option value="章草">章草</option>
+          <option value="今草">今草</option>
+          <option value="狂草">狂草</option>
+          <option value="魏碑">魏碑</option>
+          <option value="唐楷">唐楷</option>
+          <option value="行楷">行楷</option>
+          <option value="行草">行草</option>
+        </select>
+      </div>
+      <div class="card">
         <label>书法作品图片</label>
         <div class="upload-area" id="uploadArea">
           <div class="upload-icon">🖼️</div>
@@ -256,6 +271,9 @@ select { -webkit-appearance:none; }
         <div class="setting-group">
           <label>API Key</label>
           <input id="apiKey" type="password" placeholder="sk-...">
+          <div style="margin-top:6px;font-size:12px;color:var(--text-light);">
+            获取 Key：<a href="https://platform.deepseek.com/api_keys" target="_blank" style="color:var(--accent);">DeepSeek</a>
+          </div>
         </div>
         <button class="btn btn-outline btn-block" id="btnTestAPI">🔗 测试连接</button>
         <div id="apiResult" style="margin-top:10px;font-size:13px;text-align:center;"></div>
