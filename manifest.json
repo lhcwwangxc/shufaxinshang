@@ -1,6 +1,6 @@
 {
-  "name": "墨韵书斋",
-  "short_name": "墨韵书斋",
+  "name": "路笛书斋",
+  "short_name": "路笛书斋",
   "description": "书法赏析 App",
   "start_url": "./index.html",
   "display": "standalone",

@@ -1,4 +1,4 @@
-// 墨韵书斋 - app.js (完整版：含预览、书体类型、综合赏析、Word 导出)
+// 路笛书斋 - app.js (完整版：含预览、书体类型、综合赏析、Word 导出)
 // JS 执行标记
 (function(){
   var el = document.getElementById('jsStatus');
